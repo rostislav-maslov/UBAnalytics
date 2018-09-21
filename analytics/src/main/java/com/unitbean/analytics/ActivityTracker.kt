@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 
-class ActivityService(private val context: Application, private val callback: ActivityCallback) {
+internal class ActivityTracker(private val context: Application, private val callback: ActivityCallback) {
 
     private var isTracking = false
     private val listener = object : Application.ActivityLifecycleCallbacks {
@@ -18,6 +18,7 @@ class ActivityService(private val context: Application, private val callback: Ac
         }
 
         override fun onActivityDestroyed(activity: Activity?) {
+            callback.onActivityDestroyed(activity)
         }
 
         override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
@@ -48,8 +49,4 @@ class ActivityService(private val context: Application, private val callback: Ac
     }
 
     fun isTracking(): Boolean = isTracking
-
-    interface ActivityCallback {
-        fun onActivityStart(activity: Activity?)
-    }
 }

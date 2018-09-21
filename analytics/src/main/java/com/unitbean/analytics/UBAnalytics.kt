@@ -3,43 +3,70 @@ package com.unitbean.analytics
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import com.unitbean.analytics.transport.MockTransport
+import com.unitbean.analytics.transport.Transport
+import kotlinx.coroutines.experimental.GlobalScope
+import kotlinx.coroutines.experimental.launch
 import java.util.*
 
 object UBAnalytics {
 
     private val sessionId by lazy { UUID.randomUUID().toString() }
-    private val httpService by lazy { HttpService(sessionId) }
+    private val httpService: Transport by lazy { MockTransport(sessionId) /* HttpService(sessionId) */ }
 
-    private lateinit var activityService: ActivityService
+    private lateinit var activityTracker: ActivityTracker
 
     private var projectKey: String? = null
 
     /**
      * Инициализация аналитики
      * @param context - контекст
-     * @param key - ключ проекта для ассоциации
+     * @param projectId - ключ проекта для ассоциации
      */
-    fun init(context: Context, key: String) {
+    fun init(context: Context, projectId: String) {
         if (context !is Application) {
             throw IllegalStateException("Call .init on Application context instance")
+        } else if (projectId.trim().isEmpty()) {
+            throw IllegalStateException("ProjectId cannot be empty")
         }
 
-        activityService = ActivityService(context, object : ActivityService.ActivityCallback {
+        activityTracker = ActivityTracker(context, object : ActivityCallback {
             override fun onActivityStart(activity: Activity?) {
-                httpService.screenOpen(activity?.localClassName ?: "Name activity not found")
+                GlobalScope.launch {
+                    try {
+                        httpService.screenOpen(activity?.localClassName ?: "Name activity not found").await()
+                    } catch (e: Exception) {
+
+                    }
+                }
+            }
+
+            override fun onActivityDestroyed(activity: Activity?) {
+                // unused yet
             }
         })
 
-        activityService.startTracking()
+        activityTracker.startTracking()
 
-        projectKey = key
+        projectKey = projectId
+
+        GlobalScope.launch {
+            try {
+                httpService.initSession(projectId).await()
+            } catch (e: Exception) {
+
+            }
+        }
     }
 
     /**
      * Логгирует кастомный ивент пользователя
-     * TODO сделать отсылку набора параметров
      */
-    fun logEvent(tag: String, vararg params: Any) {
-        httpService.logEvent(tag, params)
+    fun logEvent(tag: String, params: Map<String, Any>) = GlobalScope.launch {
+        try {
+            httpService.logEvent(tag, params).await()
+        } catch (e: Exception) {
+
+        }
     }
 }

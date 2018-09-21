@@ -1,17 +1,16 @@
-package com.unitbean.analytics
+package com.unitbean.analytics.transport
 
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.experimental.CoroutineCallAdapterFactory
 import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.async
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.QueryMap
 import java.util.concurrent.TimeUnit
 
-class HttpService(private val sessionId: String) {
+internal class HttpService(private val sessionId: String) : Transport {
 
     private val client by lazy { OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -26,20 +25,21 @@ class HttpService(private val sessionId: String) {
         .build()
         .create(Api::class.java) }
 
-    fun logEvent(tag: String, vararg params: Any): Deferred<Any> = GlobalScope.async {
+    override fun initSession(projectId: String): Deferred<Any> = analytics.initSession(projectId, sessionId)
 
-    }
+    override fun logEvent(tag: String, params: Map<String, Any>?): Deferred<Any> = analytics.logEvent(tag, params)
 
-    fun screenOpen(name: String): Deferred<Any> = GlobalScope.async {
-
-    }
+    override fun screenOpen(name: String, params: Map<String, Any>?): Deferred<Any> = analytics.screenOpen(name, params)
 
     private interface Api {
+        @GET("/initSession")
+        fun initSession(@Query("projectId") projectId: String, @Query("sessionId") sessionId: String): Deferred<Any>
+
         @GET("/logEvent")
-        fun logEvent(@Query("tag") tag: String): Deferred<Any>
+        fun logEvent(@Query("tag") tag: String, @QueryMap map: Map<String, *>?): Deferred<Any>
 
         @GET("/screenOpen")
-        fun screenOpen(@Query("name") name: String): Deferred<Any>
+        fun screenOpen(@Query("name") name: String, @QueryMap map: Map<String, *>?): Deferred<Any>
     }
 
     companion object {
