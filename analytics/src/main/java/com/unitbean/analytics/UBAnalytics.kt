@@ -3,11 +3,13 @@ package com.unitbean.analytics
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.os.Bundle
 import com.unitbean.analytics.transport.MockTransport
 import com.unitbean.analytics.transport.Transport
 import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 import java.util.*
+import kotlin.collections.HashMap
 
 object UBAnalytics {
 
@@ -68,5 +70,23 @@ object UBAnalytics {
         } catch (e: Exception) {
 
         }
+    }
+
+    /**
+     * Логгирует кастомный ивент пользователя с аргументом [Pair]
+     */
+    fun logEvent(tag: String, value: Pair<String, Any>) = GlobalScope.launch {
+        logEvent(tag, mapOf(value))
+    }
+
+    /**
+     * Логгирует кастомный ивент пользователя с аргументом [Bundle]
+     */
+    fun logEvent(tag: String, params: Bundle) = GlobalScope.launch {
+        logEvent(tag, HashMap<String, Any>().apply {
+            for (key in params.keySet()) {
+                this[key] = params[key] ?: continue
+            }
+        })
     }
 }
