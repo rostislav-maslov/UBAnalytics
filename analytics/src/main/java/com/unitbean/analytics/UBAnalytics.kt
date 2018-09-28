@@ -2,7 +2,6 @@ package com.unitbean.analytics
 
 import android.app.Activity
 import android.app.Application
-import android.content.Context
 import android.os.Bundle
 import com.unitbean.analytics.transport.MockTransport
 import com.unitbean.analytics.transport.Transport
@@ -22,13 +21,11 @@ object UBAnalytics {
 
     /**
      * Инициализация аналитики
-     * @param context - контекст
+     * @param context - контекст уровня [Application]
      * @param projectId - ключ проекта для ассоциации
      */
-    fun init(context: Context, projectId: String) {
-        if (context !is Application) {
-            throw IllegalStateException("Call .init on Application context instance")
-        } else if (projectId.trim().isEmpty()) {
+    fun init(context: Application, projectId: String) {
+        if (projectId.trim().isEmpty()) {
             throw IllegalStateException("ProjectId cannot be empty")
         }
 
