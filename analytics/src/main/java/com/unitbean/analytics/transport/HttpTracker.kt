@@ -10,7 +10,7 @@ import retrofit2.http.Query
 import retrofit2.http.QueryMap
 import java.util.concurrent.TimeUnit
 
-internal class HttpService(private val sessionId: String) : Transport {
+internal class HttpTracker(private val sessionId: String) : Tracker {
 
     private val client by lazy { OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -25,21 +25,25 @@ internal class HttpService(private val sessionId: String) : Transport {
         .build()
         .create(Api::class.java) }
 
-    override fun initSession(projectId: String): Deferred<Any> = analytics.initSession(projectId, sessionId)
+    override suspend fun initSession(projectId: String, deviceId: String): Any = analytics.initSession(projectId, deviceId, sessionId)
 
-    override fun logEvent(tag: String, params: Map<String, Any>?): Deferred<Any> = analytics.logEvent(tag, params)
+    override suspend fun logEvent(tag: String, params: Map<String, Any>?): Any = analytics.logEvent(tag, params)
 
-    override fun screenOpen(name: String, params: Map<String, Any>?): Deferred<Any> = analytics.screenOpen(name, params)
+    override suspend fun setParams(tag: String, params: Map<String, Any>?): Any = analytics.setParams(tag, params)
 
     private interface Api {
         @GET("/initSession")
-        fun initSession(@Query("projectId") projectId: String, @Query("sessionId") sessionId: String): Deferred<Any>
+        fun initSession(@Query("projectId") projectId: String,
+                        @Query("deviceId") deviceId: String,
+                        @Query("sessionId") sessionId: String): Deferred<Any>
 
         @GET("/logEvent")
-        fun logEvent(@Query("tag") tag: String, @QueryMap map: Map<String, *>?): Deferred<Any>
+        fun logEvent(@Query("tag") tag: String,
+                     @QueryMap map: Map<String, *>?): Deferred<Any>
 
-        @GET("/screenOpen")
-        fun screenOpen(@Query("name") name: String, @QueryMap map: Map<String, *>?): Deferred<Any>
+        @GET("/params")
+        fun setParams(@Query("tag") tag: String,
+                      @QueryMap map: Map<String, *>?): Deferred<Any>
     }
 
     companion object {

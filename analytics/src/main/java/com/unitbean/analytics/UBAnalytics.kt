@@ -2,19 +2,31 @@ package com.unitbean.analytics
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
-import com.unitbean.analytics.transport.MockTransport
-import com.unitbean.analytics.transport.Transport
-import kotlinx.coroutines.experimental.GlobalScope
+import com.unitbean.analytics.transport.HttpTracker
+import com.unitbean.analytics.transport.Tracker
+import kotlinx.coroutines.experimental.CoroutineScope
+import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.launch
 import java.util.*
 import kotlin.collections.HashMap
+import kotlin.coroutines.experimental.CoroutineContext
 
-object UBAnalytics {
+object UBAnalytics : CoroutineScope {
 
-    private val sessionId by lazy { UUID.randomUUID().toString() }
-    private val httpService: Transport by lazy { MockTransport(sessionId) /* HttpService(sessionId) */ }
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.IO
 
+    private const val DEVICE_ID = "device_id"
+    private const val GOTO = "GoTo"
+
+    private val deviceId: String by lazy { validateDeviceId() }
+    private val sessionId: String by lazy { UUID.randomUUID().toString() }
+    private val httpService: Tracker by lazy { HttpTracker(sessionId) }
+
+    private lateinit var preferences: SharedPreferences
     private lateinit var activityTracker: ActivityTracker
 
     private var projectKey: String? = null
@@ -29,19 +41,11 @@ object UBAnalytics {
             throw IllegalStateException("ProjectId cannot be empty")
         }
 
+        preferences = context.getSharedPreferences(projectId, Context.MODE_PRIVATE)
+
         activityTracker = ActivityTracker(context, object : ActivityCallback {
             override fun onActivityStart(activity: Activity?) {
-                GlobalScope.launch {
-                    try {
-                        httpService.screenOpen(activity?.localClassName ?: "Name activity not found").await()
-                    } catch (e: Exception) {
-
-                    }
-                }
-            }
-
-            override fun onActivityDestroyed(activity: Activity?) {
-                // unused yet
+                logEvent(GOTO, "Screen" to (activity?.localClassName ?: "Name activity not found"))
             }
         })
 
@@ -49,9 +53,9 @@ object UBAnalytics {
 
         projectKey = projectId
 
-        GlobalScope.launch {
+        launch {
             try {
-                httpService.initSession(projectId).await()
+                httpService.initSession(projectId, deviceId)
             } catch (e: Exception) {
 
             }
@@ -61,9 +65,9 @@ object UBAnalytics {
     /**
      * Логгирует кастомный ивент пользователя
      */
-    fun logEvent(tag: String, params: Map<String, Any>) = GlobalScope.launch {
+    fun logEvent(tag: String, params: Map<String, Any>) = launch {
         try {
-            httpService.logEvent(tag, params).await()
+            httpService.logEvent(tag, params)
         } catch (e: Exception) {
 
         }
@@ -72,18 +76,33 @@ object UBAnalytics {
     /**
      * Логгирует кастомный ивент пользователя с аргументом [Pair]
      */
-    fun logEvent(tag: String, value: Pair<String, Any>) = GlobalScope.launch {
+    fun logEvent(tag: String, value: Pair<String, Any>) = launch {
         logEvent(tag, mapOf(value))
     }
 
     /**
      * Логгирует кастомный ивент пользователя с аргументом [Bundle]
      */
-    fun logEvent(tag: String, params: Bundle) = GlobalScope.launch {
+    fun logEvent(tag: String, params: Bundle) = launch {
         logEvent(tag, HashMap<String, Any>().apply {
             for (key in params.keySet()) {
                 this[key] = params[key] ?: continue
             }
         })
+    }
+
+    /**
+     * Проверяет наличие [DEVICE_ID] в сохранённых настройках приложения
+     * - присутствует: отдаем значение
+     * - отсутствует: создаем новый идентификатор, сохраняем его и отдаем
+     */
+    private fun validateDeviceId(): String {
+        return if (preferences.contains(DEVICE_ID)) {
+            preferences.getString(DEVICE_ID, "") ?: ""
+        } else {
+            val newDeviceId = UUID.randomUUID().toString()
+            preferences.edit().putString(DEVICE_ID, newDeviceId).apply()
+            return newDeviceId
+        }
     }
 }

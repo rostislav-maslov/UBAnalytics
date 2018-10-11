@@ -18,7 +18,6 @@ internal class ActivityTracker(private val context: Application, private val cal
         }
 
         override fun onActivityDestroyed(activity: Activity?) {
-            callback.onActivityDestroyed(activity)
         }
 
         override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
