@@ -49,3 +49,7 @@ internal class ActivityTracker(private val context: Application, private val cal
 
     fun isTracking(): Boolean = isTracking
 }
+
+internal interface ActivityCallback {
+    fun onActivityStart(activity: Activity?)
+}

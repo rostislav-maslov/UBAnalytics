@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import com.unitbean.analytics.transport.HttpTracker
 import com.unitbean.analytics.transport.Tracker
+import com.unitbean.analytics.transport.models.ActionRequest
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.launch
@@ -24,7 +25,7 @@ object UBAnalytics : CoroutineScope {
 
     private val deviceId: String by lazy { validateDeviceId() }
     private val sessionId: String by lazy { UUID.randomUUID().toString() }
-    private val httpService: Tracker by lazy { HttpTracker(sessionId) }
+    private val httpService: Tracker by lazy { HttpTracker(projectKey, sessionId) }
 
     private lateinit var preferences: SharedPreferences
     private lateinit var activityTracker: ActivityTracker
@@ -55,9 +56,8 @@ object UBAnalytics : CoroutineScope {
 
         launch {
             try {
-                httpService.initSession(projectId, deviceId)
+                httpService.initSession(deviceId)
             } catch (e: Exception) {
-
             }
         }
     }
@@ -65,30 +65,38 @@ object UBAnalytics : CoroutineScope {
     /**
      * Логгирует кастомный ивент пользователя
      */
-    fun logEvent(tag: String, params: Map<String, Any>) = launch {
-        try {
-            httpService.logEvent(tag, params)
-        } catch (e: Exception) {
-
+    fun logEvent(tag: String, params: Map<String, Any>) {
+        launch {
+            try {
+                val customParams = params.map { pair ->
+                    pair.key to ActionRequest.CustomField(pair.value.toString(), "STRING")
+                }.toMap()
+                httpService.logEvent(tag, customParams)
+            } catch (e: Exception) {
+            }
         }
     }
 
     /**
      * Логгирует кастомный ивент пользователя с аргументом [Pair]
      */
-    fun logEvent(tag: String, value: Pair<String, Any>) = launch {
-        logEvent(tag, mapOf(value))
+    fun logEvent(tag: String, value: Pair<String, Any>) {
+        launch {
+            logEvent(tag, mapOf(value))
+        }
     }
 
     /**
      * Логгирует кастомный ивент пользователя с аргументом [Bundle]
      */
-    fun logEvent(tag: String, params: Bundle) = launch {
-        logEvent(tag, HashMap<String, Any>().apply {
-            for (key in params.keySet()) {
-                this[key] = params[key] ?: continue
-            }
-        })
+    fun logEvent(tag: String, params: Bundle) {
+        launch {
+            logEvent(tag, HashMap<String, Any>().apply {
+                for (key in params.keySet()) {
+                    this[key] = params[key] ?: continue
+                }
+            })
+        }
     }
 
     /**

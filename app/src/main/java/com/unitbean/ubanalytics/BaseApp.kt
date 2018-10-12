@@ -8,6 +8,6 @@ class BaseApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        UBAnalytics.init(this, "Test App Android")
+        UBAnalytics.init(this, "qwerty")
     }
 }

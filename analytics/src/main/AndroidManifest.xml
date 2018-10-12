@@ -1,1 +1,6 @@
-<manifest package="com.unitbean.analytics"/>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.unitbean.analytics">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+</manifest>
