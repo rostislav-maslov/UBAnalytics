@@ -1,5 +1,27 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
+
+ext {
+    bintrayRepo = "UBAnalytics"
+    bintrayName = "com.unitbean.core"
+    libraryName = "analytics"
+
+    publishedGroupId = "com.unitbean.core"
+    artifact = "analytics"
+    libraryVersion = "1.0.0"
+
+    libraryDescription = "UnitBean analytics solution for Android projects"
+    siteUrl = 'https://github.com/unitbean/UBAnalytics'
+    gitUrl = 'https://github.com/unitbean/UBAnalytics.git'
+    developerId = 'UnitBean'
+    developerName = 'Android developer'
+    developerEmail = 'Info@unitbean.com'
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
 
 android {
     compileSdkVersion 28
@@ -43,6 +65,12 @@ dependencies {
 repositories {
     mavenCentral()
 }
+
+if (project.rootProject.file('local.properties').exists()) {
+    apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+    apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
+}
+
 kotlin {
     experimental {
         coroutines "enable"

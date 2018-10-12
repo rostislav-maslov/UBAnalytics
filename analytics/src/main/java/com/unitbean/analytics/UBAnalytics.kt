@@ -7,14 +7,13 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import com.unitbean.analytics.transport.HttpTracker
 import com.unitbean.analytics.transport.Tracker
-import com.unitbean.analytics.transport.models.ActionRequest
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.launch
-import java.util.*
 import kotlin.collections.HashMap
 import kotlin.coroutines.experimental.CoroutineContext
 
+@Suppress("UNUSED")
 object UBAnalytics : CoroutineScope {
 
     override val coroutineContext: CoroutineContext
@@ -23,14 +22,14 @@ object UBAnalytics : CoroutineScope {
     private const val DEVICE_ID = "device_id"
     private const val GOTO = "GoTo"
 
-    private val deviceId: String by lazy { validateDeviceId() }
-    private val sessionId: String by lazy { UUID.randomUUID().toString() }
-    private val httpService: Tracker by lazy { HttpTracker(projectKey, sessionId) }
+    private val tracker: Tracker by lazy { HttpTracker(projectKey) }
+
+    private var deviceId: String? = null
+    private var sessionId: String? = null
 
     private lateinit var preferences: SharedPreferences
     private lateinit var activityTracker: ActivityTracker
-
-    private var projectKey: String? = null
+    private lateinit var projectKey: String
 
     /**
      * Инициализация аналитики
@@ -39,7 +38,7 @@ object UBAnalytics : CoroutineScope {
      */
     fun init(context: Application, projectId: String) {
         if (projectId.trim().isEmpty()) {
-            throw IllegalStateException("ProjectId cannot be empty")
+            throw IllegalArgumentException("ProjectId cannot be empty")
         }
 
         preferences = context.getSharedPreferences(projectId, Context.MODE_PRIVATE)
@@ -56,7 +55,12 @@ object UBAnalytics : CoroutineScope {
 
         launch {
             try {
-                httpService.initSession(deviceId)
+                deviceId = preferences.getString(DEVICE_ID, null)
+                val session = tracker.initSession(deviceId)
+                deviceId = session.result.deviceId
+                sessionId = session.result.sessionId
+
+                preferences.edit().putString(DEVICE_ID, deviceId).apply()
             } catch (e: Exception) {
             }
         }
@@ -68,10 +72,9 @@ object UBAnalytics : CoroutineScope {
     fun logEvent(tag: String, params: Map<String, Any>) {
         launch {
             try {
-                val customParams = params.map { pair ->
-                    pair.key to ActionRequest.CustomField(pair.value.toString(), "STRING")
-                }.toMap()
-                httpService.logEvent(tag, customParams)
+                sessionId?.let {
+                    tracker.logEvent(tag, it, params)
+                }
             } catch (e: Exception) {
             }
         }
@@ -81,36 +84,17 @@ object UBAnalytics : CoroutineScope {
      * Логгирует кастомный ивент пользователя с аргументом [Pair]
      */
     fun logEvent(tag: String, value: Pair<String, Any>) {
-        launch {
-            logEvent(tag, mapOf(value))
-        }
+        logEvent(tag, mapOf(value))
     }
 
     /**
      * Логгирует кастомный ивент пользователя с аргументом [Bundle]
      */
     fun logEvent(tag: String, params: Bundle) {
-        launch {
-            logEvent(tag, HashMap<String, Any>().apply {
-                for (key in params.keySet()) {
-                    this[key] = params[key] ?: continue
-                }
-            })
-        }
-    }
-
-    /**
-     * Проверяет наличие [DEVICE_ID] в сохранённых настройках приложения
-     * - присутствует: отдаем значение
-     * - отсутствует: создаем новый идентификатор, сохраняем его и отдаем
-     */
-    private fun validateDeviceId(): String {
-        return if (preferences.contains(DEVICE_ID)) {
-            preferences.getString(DEVICE_ID, "") ?: ""
-        } else {
-            val newDeviceId = UUID.randomUUID().toString()
-            preferences.edit().putString(DEVICE_ID, newDeviceId).apply()
-            return newDeviceId
-        }
+        logEvent(tag, HashMap<String, Any>().apply {
+            for (key in params.keySet()) {
+                this[key] = params[key] ?: continue
+            }
+        })
     }
 }

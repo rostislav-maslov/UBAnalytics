@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 
+@Suppress("UNUSED")
 internal class ActivityTracker(private val context: Application, private val callback: ActivityCallback) {
 
     private var isTracking = false

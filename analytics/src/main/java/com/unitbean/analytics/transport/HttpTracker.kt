@@ -13,7 +13,7 @@ import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.*
 import java.util.concurrent.TimeUnit
 
-internal class HttpTracker(private val projectId: String?, private val sessionId: String) : Tracker {
+internal class HttpTracker(private val projectId: String) : Tracker {
 
     private val client by lazy { OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
@@ -29,22 +29,22 @@ internal class HttpTracker(private val projectId: String?, private val sessionId
         .build()
         .create(Api::class.java) }
 
-    override suspend fun initSession(deviceId: String) = analytics.initSession(InitRequest(projectId, deviceId)).await()
-
-    override suspend fun logEvent(type: String, customFields: Map<String, ActionRequest.CustomField>) = analytics.logEvent(ActionRequest(projectId, sessionId, type, customFields)).await()
+    override suspend fun initSession(deviceId: String?) = analytics.initSession(InitRequest(projectId, deviceId)).await()
 
     override suspend fun setParams(tag: String, params: Map<String, Any>?) = analytics.setParams(tag, params).await()
+
+    override suspend fun logEvent(type: String, sessionId: String, customFields: Map<String, Any>?) = analytics.logEvent(ActionRequest(projectId, sessionId, type, customFields)).await()
 
     private interface Api {
         @POST("$V1/session/register")
         fun initSession(@Body request: InitRequest): Deferred<BaseResponse<InitResponse>>
 
-        @POST("$V1/action")
-        fun logEvent(@Body request: ActionRequest): Deferred<BaseResponse<String>>
-
         @POST("$V1/session/custom-field")
         fun setParams(@Query("tag") tag: String,
                       @QueryMap map: Map<String, *>?): Deferred<BaseResponse<String>>
+
+        @POST("$V1/action")
+        fun logEvent(@Body request: ActionRequest): Deferred<BaseResponse<String>>
     }
 
     companion object {

@@ -13,6 +13,6 @@ class SecondActivity : AppCompatActivity() {
     }
 
     fun handleAction(v: View) {
-        UBAnalytics.logEvent("Button", mapOf("Action" to "Custom"))
+        UBAnalytics.logEvent("Button", mapOf("Action" to "Custom", "AnotherCustomAction" to "AnotherCustomField", "ThridParam" to "ThirdValue", "NumberValue" to 31, "FloatValue" to 4014.14F))
     }
 }
