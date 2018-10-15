@@ -24,13 +24,11 @@ internal class HttpTracker(private val projectId: String) : Tracker {
                 val original = chain.request()
                 val method = original.method()
 
-                val authToken = projectId
-
                 val requestBuilder = original.newBuilder()
                     .method(method, original.body())
 
-                if (!authToken.isEmpty())
-                    requestBuilder.header("X-Auth-Token", authToken)
+                if (!projectId.isEmpty())
+                    requestBuilder.header("X-Auth-Token", projectId)
 
                 if (!sessionId.isNullOrEmpty())
                     requestBuilder.header("X-Session-ID", sessionId!!)

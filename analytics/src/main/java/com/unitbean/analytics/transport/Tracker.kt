@@ -12,17 +12,19 @@ internal interface Tracker {
     suspend fun utmSession(sessionId: String, source: String, medium: String, campaign: String, content: String, term: String): BaseResponse<String>
 }
 
-enum class TrackerTypes {
+internal enum class TrackerTypes {
     STRING,
     INT,
     DOUBLE,
+    LONG,
+    FLOAT,
     ARRAY;
 
     companion object {
 
         /**
          * Конвертация любого переданного объекта в тип, известный системе аналитики
-         * Умеет работать со [String], [Int], [Double], [Array]
+         * Умеет работать со [String], [Int], [Double], [Long], [Float], [Array]
          */
         fun getType(someObject: Any): TrackerTypes {
             return when (someObject) {
@@ -30,13 +32,15 @@ enum class TrackerTypes {
                 is Int -> INT
                 is Double -> DOUBLE
                 is Array<*> -> ARRAY
+                is Long -> LONG
+                is Float -> FLOAT
                 else -> throw IllegalArgumentException("Unsupported type: ${someObject.javaClass}")
             }
         }
     }
 }
 
-enum class TypeTypes {
+internal enum class TypeTypes {
     GO_TO,              // для трека перехода на новый экран
     ERROR,              // для трека ошибки (?)
     WARNING,            // для трека опасного состояния (?)
