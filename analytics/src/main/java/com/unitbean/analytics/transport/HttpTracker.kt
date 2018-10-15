@@ -71,12 +71,12 @@ internal class HttpTracker(private val projectId: String) : Tracker {
         return analytics.userRegister(UserRegisterRequest(externalId, customFields)).await()
     }
 
-    override suspend fun utmSession(sessionId: String, source: String, medium: String, campaign: String, content: String, term: String, createdAt: Long): BaseResponse<String> {
+    override suspend fun utmSession(sessionId: String, source: String, medium: String, campaign: String, content: String, term: String): BaseResponse<String> {
         if (this.sessionId.isNullOrEmpty()) {
             this.sessionId = sessionId
         }
 
-        return analytics.utmSession(UtmRequest(source, medium, campaign, content, term, createdAt)).await()
+        return analytics.utmSession(UtmRequest(source, medium, campaign, content, term)).await()
     }
 
     private interface Api {

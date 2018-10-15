@@ -125,7 +125,7 @@ object UBAnalytics : CoroutineScope {
         launch {
             try {
                 if (!sessionId.isNullOrEmpty()) {
-                    tracker.utmSession(sessionId!!, source, medium, campaign, content, term, System.currentTimeMillis())
+                    tracker.utmSession(sessionId!!, source, medium, campaign, content, term)
                 }
             } catch (e: Exception) {
             }

@@ -15,5 +15,5 @@ internal class MockTracker(private val sessionId: String) : Tracker {
 
     override suspend fun userRegister(externalId: String, sessionId: String, customFields: Map<String, ActionRequest.CustomField>?): BaseResponse<String> = BaseResponse("Ok", null, null)
 
-    override suspend fun utmSession(sessionId: String, source: String, medium: String, campaign: String, content: String, term: String, createdAt: Long): BaseResponse<String> = BaseResponse("Ok", null, null)
+    override suspend fun utmSession(sessionId: String, source: String, medium: String, campaign: String, content: String, term: String): BaseResponse<String> = BaseResponse("Ok", null, null)
 }
