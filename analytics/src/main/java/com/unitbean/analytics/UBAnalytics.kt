@@ -7,6 +7,9 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import com.unitbean.analytics.transport.HttpTracker
 import com.unitbean.analytics.transport.Tracker
+import com.unitbean.analytics.transport.TrackerTypes
+import com.unitbean.analytics.transport.TypeTypes
+import com.unitbean.analytics.transport.models.ActionRequest
 import kotlinx.coroutines.experimental.CoroutineScope
 import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.launch
@@ -20,7 +23,7 @@ object UBAnalytics : CoroutineScope {
         get() = Dispatchers.IO
 
     private const val DEVICE_ID = "device_id"
-    private const val GOTO = "GoTo"
+    private const val SESSION_ID = "session_id"
 
     private val tracker: Tracker by lazy { HttpTracker(projectKey) }
 
@@ -34,36 +37,34 @@ object UBAnalytics : CoroutineScope {
     /**
      * Инициализация аналитики
      * @param context - контекст уровня [Application]
-     * @param projectId - ключ проекта для ассоциации
+     * @param projectToken - токен проекта для ассоциации
+     * @param clientVersion - версия клиента для отсылания
      */
-    fun init(context: Application, projectId: String) {
-        if (projectId.trim().isEmpty()) {
-            throw IllegalArgumentException("ProjectId cannot be empty")
+    suspend fun init(context: Application, projectToken: String, clientVersion: String) {
+        if (projectToken.trim().isEmpty()) {
+            throw IllegalArgumentException("ProjectToken cannot be empty")
         }
 
-        preferences = context.getSharedPreferences(projectId, Context.MODE_PRIVATE)
+        preferences = context.getSharedPreferences(projectToken, Context.MODE_PRIVATE)
 
         activityTracker = ActivityTracker(context, object : ActivityCallback {
             override fun onActivityStart(activity: Activity?) {
-                logEvent(GOTO, "Screen" to (activity?.localClassName ?: "Name activity not found"))
+                logEvent(TypeTypes.GO_TO.name, "SCREEN" to (activity?.localClassName ?: "Name activity not found"))
             }
         })
 
         activityTracker.startTracking()
 
-        projectKey = projectId
+        projectKey = projectToken
 
-        launch {
-            try {
-                deviceId = preferences.getString(DEVICE_ID, null)
-                val session = tracker.initSession(deviceId)
-                deviceId = session.result.deviceId
-                sessionId = session.result.sessionId
+        deviceId = preferences.getString(DEVICE_ID, null)
+        val session = tracker.initSession(deviceId, clientVersion)
+        deviceId = session.result.deviceId
+        sessionId = session.result.sessionId
 
-                preferences.edit().putString(DEVICE_ID, deviceId).apply()
-            } catch (e: Exception) {
-            }
-        }
+        preferences.edit()
+            .putString(DEVICE_ID, deviceId)
+            .apply()
     }
 
     /**
@@ -73,7 +74,9 @@ object UBAnalytics : CoroutineScope {
         launch {
             try {
                 sessionId?.let {
-                    tracker.logEvent(tag, it, params)
+                    tracker.logEvent(tag, it, params.mapValues { entry ->
+                        ActionRequest.CustomField(entry.value, TrackerTypes.getType(entry.value))
+                    })
                 }
             } catch (e: Exception) {
             }
@@ -96,5 +99,36 @@ object UBAnalytics : CoroutineScope {
                 this[key] = params[key] ?: continue
             }
         })
+    }
+
+    /**
+     * Запрос на сохранение данных пользователя
+     */
+    fun register(externalId: String, params: Map<String, Any>) {
+        launch {
+            try {
+                if (!sessionId.isNullOrEmpty()) {
+                    tracker.userRegister(externalId, sessionId!!, params.mapValues { entry ->
+                        ActionRequest.CustomField(entry.key, TrackerTypes.getType(entry.value))
+                    })
+                }
+            } catch (e: Exception) {
+            }
+        }
+    }
+
+    /**
+     * Запрос на сохранение данных UTM меток для сессии
+     * Используется для трекинга маркетинговых кампаний
+     */
+    fun utmSession(source: String, medium: String, campaign: String, content: String, term: String) {
+        launch {
+            try {
+                if (!sessionId.isNullOrEmpty()) {
+                    tracker.utmSession(sessionId!!, source, medium, campaign, content, term, System.currentTimeMillis())
+                }
+            } catch (e: Exception) {
+            }
+        }
     }
 }
