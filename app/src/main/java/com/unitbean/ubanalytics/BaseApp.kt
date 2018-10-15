@@ -14,7 +14,9 @@ class BaseApp : Application() {
 
         GlobalScope.launch {
             try {
-                UBAnalytics.init(this@BaseApp, "5bc44ef959201a03bf7c8a685bc44f0159201a03bf7c8a695bc44f0159201a03bf7c8a6a", BuildConfig.VERSION_NAME)
+                UBAnalytics.apply {
+                    isDebuggable = true
+                }.init(this@BaseApp, "5bc44ef959201a03bf7c8a685bc44f0159201a03bf7c8a695bc44f0159201a03bf7c8a6a", BuildConfig.VERSION_NAME)
             } catch (e: Exception) {
                 Log.e("Application", e.message, e)
             }

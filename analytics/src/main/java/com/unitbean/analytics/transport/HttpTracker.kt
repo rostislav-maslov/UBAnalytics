@@ -2,6 +2,7 @@ package com.unitbean.analytics.transport
 
 import android.os.Build
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.experimental.CoroutineCallAdapterFactory
+import com.unitbean.analytics.UBAnalytics
 import com.unitbean.analytics.transport.models.*
 import kotlinx.coroutines.experimental.Deferred
 import okhttp3.OkHttpClient
@@ -19,7 +20,13 @@ internal class HttpTracker(private val projectId: String) : Tracker {
         OkHttpClient.Builder()
             .connectTimeout(60, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
-            .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+            .addInterceptor(
+                HttpLoggingInterceptor().setLevel(
+                    if (UBAnalytics.isDebuggable) {
+                        HttpLoggingInterceptor.Level.BODY
+                    } else {
+                        HttpLoggingInterceptor.Level.NONE
+                    }))
             .addInterceptor { chain ->
                 val original = chain.request()
                 val method = original.method()

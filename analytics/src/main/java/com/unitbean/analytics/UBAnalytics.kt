@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import com.unitbean.analytics.transport.HttpTracker
 import com.unitbean.analytics.transport.Tracker
 import com.unitbean.analytics.transport.TrackerTypes
@@ -24,6 +25,8 @@ object UBAnalytics : CoroutineScope {
 
     private const val DEVICE_ID = "device_id"
     private const val SESSION_ID = "session_id"
+
+    var isDebuggable = false
 
     private val tracker: Tracker by lazy { HttpTracker(projectKey) }
 
@@ -79,6 +82,9 @@ object UBAnalytics : CoroutineScope {
                     })
                 }
             } catch (e: Exception) {
+                if (isDebuggable) {
+                    Log.e("UBAnalytics", e.message, e)
+                }
             }
         }
     }
@@ -113,6 +119,9 @@ object UBAnalytics : CoroutineScope {
                     })
                 }
             } catch (e: Exception) {
+                if (isDebuggable) {
+                    Log.e("UBAnalytics", e.message, e)
+                }
             }
         }
     }
@@ -128,6 +137,9 @@ object UBAnalytics : CoroutineScope {
                     tracker.utmSession(sessionId!!, source, medium, campaign, content, term)
                 }
             } catch (e: Exception) {
+                if (isDebuggable) {
+                    Log.e("UBAnalytics", e.message, e)
+                }
             }
         }
     }
