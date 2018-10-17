@@ -1,6 +1,7 @@
 package com.unitbean.analytics.transport
 
 import android.os.Build
+import android.util.Log
 import com.jakewharton.retrofit2.adapter.kotlin.coroutines.experimental.CoroutineCallAdapterFactory
 import com.unitbean.analytics.UBAnalytics
 import com.unitbean.analytics.transport.models.*
@@ -10,7 +11,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.*
+import java.net.NetworkInterface
 import java.util.concurrent.TimeUnit
+import java.util.*
 
 internal class HttpTracker(private val projectId: String) : Tracker {
 
@@ -56,7 +59,7 @@ internal class HttpTracker(private val projectId: String) : Tracker {
             .create(Api::class.java)
     }
 
-    override suspend fun initSession(deviceId: String?, clientVersion: String) = analytics.initSession(InitRequest(deviceId, deviceData = InitRequest.DeviceData("1.0.0.0", "ANDROID", "${Build.MANUFACTURER} ${Build.MODEL}", clientVersion, "Android API ${Build.VERSION.SDK_INT}"))).await()
+    override suspend fun initSession(deviceId: String?, clientVersion: String) = analytics.initSession(InitRequest(deviceId, deviceData = InitRequest.DeviceData(getIPAddress(), "ANDROID", "${Build.MANUFACTURER} ${Build.MODEL}", clientVersion, "Android API ${Build.VERSION.SDK_INT}"))).await()
 
     override suspend fun setParams(tag: String, params: Map<String, Any>?) = analytics.setParams(tag, params).await()
 
@@ -105,5 +108,37 @@ internal class HttpTracker(private val projectId: String) : Tracker {
     companion object {
         private const val BASE_URL = "https://analytics-api.unitbean.ru"
         private const val V1 = "/api/v1"
+
+        /**
+         * Получение локального IP-адреса устройства
+         */
+        internal fun getIPAddress(useIPv4: Boolean = true): String {
+            try {
+                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                for (networkInterface in interfaces) {
+                    val networkAddresses = Collections.list(networkInterface.inetAddresses)
+                    for (networkAddress in networkAddresses) {
+                        if (!networkAddress.isLoopbackAddress) {
+                            val address = networkAddress.hostAddress
+                            val isIPv4 = address.indexOf(':') < 0
+                            if (useIPv4) {
+                                if (isIPv4)
+                                    return address
+                            } else {
+                                if (!isIPv4) {
+                                    val delimiter = address.indexOf('%') // drop ip6 zone suffix
+                                    return if (delimiter < 0) address.toUpperCase() else address.substring(0, delimiter).toUpperCase()
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (UBAnalytics.isDebuggable) {
+                    Log.e("UBAnalytics", e.message, e)
+                }
+            }
+            return ""
+        }
     }
 }
