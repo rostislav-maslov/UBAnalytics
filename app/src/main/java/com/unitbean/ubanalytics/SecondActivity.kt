@@ -1,8 +1,8 @@
 package com.unitbean.ubanalytics
 
+import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
-import androidx.appcompat.app.AppCompatActivity
 import com.unitbean.analytics.UBAnalytics
 
 class SecondActivity : AppCompatActivity() {
