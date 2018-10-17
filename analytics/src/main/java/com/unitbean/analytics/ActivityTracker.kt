@@ -1,6 +1,6 @@
 package com.unitbean.analytics
 
-import android.support.v7.app.AppCompatActivity
+import android.app.Activity
 import android.app.Application
 import android.os.Bundle
 
@@ -9,25 +9,25 @@ internal class ActivityTracker(private val context: Application, private val cal
 
     private var isTracking = false
     private val listener = object : Application.ActivityLifecycleCallbacks {
-        override fun onActivityPaused(activity: AppCompatActivity?) {
+        override fun onActivityPaused(activity: Activity?) {
         }
 
-        override fun onActivityResumed(activity: AppCompatActivity?) {
+        override fun onActivityResumed(activity: Activity?) {
         }
 
-        override fun onActivityStarted(activity: AppCompatActivity?) {
+        override fun onActivityStarted(activity: Activity?) {
         }
 
-        override fun onActivityDestroyed(activity: AppCompatActivity?) {
+        override fun onActivityDestroyed(activity: Activity?) {
         }
 
-        override fun onActivitySaveInstanceState(activity: AppCompatActivity?, outState: Bundle?) {
+        override fun onActivitySaveInstanceState(activity: Activity?, outState: Bundle?) {
         }
 
-        override fun onActivityStopped(activity: AppCompatActivity?) {
+        override fun onActivityStopped(activity: Activity?) {
         }
 
-        override fun onActivityCreated(activity: AppCompatActivity?, savedInstanceState: Bundle?) {
+        override fun onActivityCreated(activity: Activity?, savedInstanceState: Bundle?) {
             callback.onActivityStart(activity)
         }
     }
@@ -52,5 +52,5 @@ internal class ActivityTracker(private val context: Application, private val cal
 }
 
 internal interface ActivityCallback {
-    fun onActivityStart(activity: AppCompatActivity?)
+    fun onActivityStart(activity: Activity?)
 }

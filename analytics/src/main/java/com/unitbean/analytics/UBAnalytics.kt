@@ -1,6 +1,6 @@
 package com.unitbean.analytics
 
-import android.support.v7.app.AppCompatActivity
+import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.content.SharedPreferences
@@ -51,7 +51,7 @@ object UBAnalytics : CoroutineScope {
         preferences = context.getSharedPreferences(projectToken, Context.MODE_PRIVATE)
 
         activityTracker = ActivityTracker(context, object : ActivityCallback {
-            override fun onActivityStart(activity: AppCompatActivity?) {
+            override fun onActivityStart(activity: Activity?) {
                 logEvent(TypeTypes.GO_TO.name, "SCREEN" to (activity?.localClassName ?: "Name activity not found"))
             }
         })
