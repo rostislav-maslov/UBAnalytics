@@ -2,10 +2,10 @@ package com.unitbean.analytics.transport
 
 import android.os.Build
 import android.util.Log
-import com.jakewharton.retrofit2.adapter.kotlin.coroutines.experimental.CoroutineCallAdapterFactory
+import com.jakewharton.retrofit2.adapter.kotlin.coroutines.CoroutineCallAdapterFactory
 import com.unitbean.analytics.UBAnalytics
 import com.unitbean.analytics.transport.models.*
-import kotlinx.coroutines.experimental.Deferred
+import kotlinx.coroutines.Deferred
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit

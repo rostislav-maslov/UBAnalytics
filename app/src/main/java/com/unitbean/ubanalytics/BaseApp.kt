@@ -3,8 +3,8 @@ package com.unitbean.ubanalytics
 import android.app.Application
 import android.util.Log
 import com.unitbean.analytics.UBAnalytics
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.lang.Exception
 
 class BaseApp : Application() {
