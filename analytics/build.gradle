@@ -10,7 +10,7 @@ ext {
 
     publishedGroupId = "com.unitbean.core"
     artifact = "analytics-compat"
-    libraryVersion = "1.0.2"
+    libraryVersion = "1.0.3"
 
     libraryDescription = "UnitBean analytics solution for Android projects"
     siteUrl = 'https://github.com/unitbean/UBAnalytics'
